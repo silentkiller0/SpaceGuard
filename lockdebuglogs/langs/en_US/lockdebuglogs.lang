@@ -1,0 +1,76 @@
+# LockDebugLogs
+Module500001Name = Space guard
+Module500001Desc = Safety timers for Debug Logs (auto-disable module or delete log file)
+LockDebugLogsDesc = Safety timers for Debug Logs (auto-disable module or delete log file)
+LockDebugLogsDescLong = Adds scheduled safeguards so Debug Logs cannot stay enabled or grow log files indefinitely. Does not modify Dolibarr core.
+
+Settings = Settings
+LockDebugLogsSetupTitle = Space guard
+LockDebugLogsSyslogStatus = Debug Logs status
+LockDebugLogsSyslogEnabled = Debug Logs module is enabled
+LockDebugLogsSyslogDisabled = Debug Logs module is disabled
+LockDebugLogsSyslogLevel = Current log level
+LockDebugLogsLogFile = Configured log file
+LockDebugLogsOpenSyslogSetup = Open native Debug Logs setup
+LockDebugLogsCronInfo = A scheduled job runs every 5 minutes when the Scheduled jobs module is active.
+LockDebugLogsAutoRunHelp = Safeguards run automatically on every Dolibarr page you open (no need to visit the module list). If nobody uses Dolibarr at the deadline, enable Scheduled jobs and run cron_run_jobs.php every 5 minutes (Windows Task Scheduler on local installs).
+LockDebugLogsCronMissing = Scheduled jobs module is disabled: deadlines will NOT run while Dolibarr is completely idle. Enable modCron and schedule cron_run_jobs.php for 24/7 automatic execution.
+LockDebugLogsExecuteNow = Execute it now
+LockDebugLogsLogIntro = Below are the last lines from the Dolibarr debug log file (SYSLOG_FILE).
+LockDebugLogsReloadLogs = Reload last logs
+LockDebugLogsLogFileNotFound = We did not find any log file at this path: %s
+LockDebugLogsTraceLogEmpty = The log file exists but is empty — enable Debug Logs and raise the log level to see entries.
+LockDebugLogsStatusDebugLogs = Debug Logs module
+LockDebugLogsStatusCron = Scheduled jobs (cron)
+LockDebugLogsServerNowLabel = Dolibarr time now
+LockDebugLogsBadgeActive = Active
+LockDebugLogsBadgeOff = Off
+LockDebugLogsBadgeRecommended = Enable recommended
+LockDebugLogsEnableModule = Enable module
+LockDebugLogsCronHintShort = Enable the <b>Scheduled jobs</b> module and run <code>cron_run_jobs.php</code> every 5 minutes so deadlines run even when nobody is logged in.
+LockDebugLogsDebugHintShort = Enable the <b>Debug Logs</b> module when you need tracing; use the safeguards below to auto-disable it or delete the log file on schedule.
+LockDebugLogsInSeconds = in %s s
+LockDebugLogsOverdue = overdue — click Execute it now or open any Dolibarr page
+LockDebugLogsTimezoneFixHint = If the countdown looks wrong by about 1–2 hours, save the deadline again after upgrading LockDebugLogs (timezone fix).
+LockDebugLogsLastAction = Last automatic action
+
+LockDebugLogsSectionDisable = Auto-disable Debug Logs module
+LockDebugLogsSectionDisableHelp = Disables the native Debug Logs module (modSyslog) at the deadline. The module is not uninstalled.
+LockDebugLogsSectionDelete = Auto-delete log file
+LockDebugLogsSectionDeleteHelp = Deletes the file defined by SYSLOG_FILE. Path must stay under DOL_DATA_ROOT.
+
+LockDebugLogsEnableFeature = Enable this safeguard
+LockDebugLogsModeDuration = Disable automatically after
+LockDebugLogsModeDatetime = Disable at date and time
+LockDebugLogsModeDeleteDuration = Delete automatically after
+LockDebugLogsModeDeleteDatetime = Delete at date and time
+LockDebugLogsDeadline = Scheduled deadline
+LockDebugLogsNoDeadline = No deadline scheduled
+
+LockDebugLogsDuration5min = 5 minutes
+LockDebugLogsDuration10min = 10 minutes
+LockDebugLogsDuration15min = 15 minutes
+LockDebugLogsDuration30min = 30 minutes
+LockDebugLogsDuration1h = 1 hour
+LockDebugLogsDuration2h = 2 hours
+LockDebugLogsDuration4h = 4 hours
+LockDebugLogsDuration8h = 8 hours
+LockDebugLogsDuration24h = 24 hours
+
+LockDebugLogsWarnCronDisabled = For reliable auto-stop, enable the Scheduled jobs module and configure cron_run_jobs.php.
+LockDebugLogsInvalidDeadline = Invalid or past date/time, or missing duration.
+LockDebugLogsSetupSaved = Safeguard settings saved
+
+LockDebugLogsActionDisabledSyslog = Debug Logs module disabled automatically on %s
+LockDebugLogsActionSyslogAlreadyOff = Debug Logs was already disabled at deadline
+LockDebugLogsActionDeletedLog = Log file deleted: %s
+LockDebugLogsActionLogNotFound = Log file not found or already removed
+LockDebugLogsErrorDeleteLog = Failed to delete log file
+LockDebugLogsErrorUnsafeLogPath = Log file path is outside DOL_DATA_ROOT (action blocked)
+
+LockDebugLogsFloatLead = Native Debug Logs
+LockDebugLogsFloatIsActive = is active
+LockDebugLogsFloatTail = Don't forget to disable it, or activate
+LockDebugLogsFloatSpaceGuard = SpaceGuard
+LockDebugLogsFloatAutoDisable = Auto-disable is scheduled
+LockDebugLogsFloatAutoDelete = Auto-delete is scheduled
