@@ -41,7 +41,7 @@ class modLockDebugLogs extends DolibarrModules
 		$this->name = preg_replace('/^mod/i', '', get_class($this));
 		$this->description = 'Safety timers for Debug Logs (auto-disable module or delete log file)';
 		$this->descriptionlong = 'LockDebugLogsDescLong';
-		$this->version = '1.0.0';
+		$this->version = '1.1.0';
 		$this->editor_name = 'Big Data Consulting';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'lock';
