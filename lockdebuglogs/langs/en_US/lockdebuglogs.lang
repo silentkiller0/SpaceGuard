@@ -74,3 +74,8 @@ LockDebugLogsFloatTail = Don't forget to disable it, or activate
 LockDebugLogsFloatSpaceGuard = SpaceGuard
 LockDebugLogsFloatAutoDisable = Auto-disable is scheduled
 LockDebugLogsFloatAutoDelete = Auto-delete is scheduled
+
+LockDebugLogsModuleOff = Module LockDebugLogs is disabled
+LockDebugLogsNoActionDue = No action due
+LockDebugLogsActionFailed = Safeguard "%s" failed (attempt %s of %s), will retry in a few minutes: %s
+LockDebugLogsActionGaveUp = Safeguard "%s" gave up after %s failed attempt(s) and was switched off: %s

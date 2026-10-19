@@ -57,36 +57,47 @@ $durations = lockdebuglogsGetDurationChoices();
 /*
  * Actions
  */
-if ($action == 'runnow') {
+// The two safeguard blocks: constant prefix => form field prefix, card CSS class, lang keys.
+$blockDefs = array(
+	'DISABLE_MODULE' => array(
+		'field' => 'disable_module',
+		'class' => 'lockdebuglogs-card-disable',
+		'title' => 'LockDebugLogsSectionDisable',
+		'help' => 'LockDebugLogsSectionDisableHelp',
+		'modeDuration' => 'LockDebugLogsModeDuration',
+		'modeDatetime' => 'LockDebugLogsModeDatetime',
+	),
+	'DELETE_FILE' => array(
+		'field' => 'delete_file',
+		'class' => 'lockdebuglogs-card-delete',
+		'title' => 'LockDebugLogsSectionDelete',
+		'help' => 'LockDebugLogsSectionDeleteHelp',
+		'modeDuration' => 'LockDebugLogsModeDeleteDuration',
+		'modeDatetime' => 'LockDebugLogsModeDeleteDatetime',
+	),
+);
+
+// "Execute it now" changes state: POST only (the token is checked by main.inc.php).
+if ($action == 'runnow' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 	LockDebugLogs::runAndNotify($db, 'setup_runnow');
 }
 
 if ($action == 'update') {
 	$error = 0;
 
-	$disableEnabled = GETPOSTINT('disable_module_enabled');
-	$disableMode = GETPOST('disable_module_mode', 'aZ09');
-	$disableDuration = GETPOSTINT('disable_module_duration');
-	$disableDatetime = GETPOST('disable_module_datetime', 'alphanohtml');
-	$disableDatetime = str_replace('T', ' ', $disableDatetime);
-
-	$deleteEnabled = GETPOSTINT('delete_file_enabled');
-	$deleteMode = GETPOST('delete_file_mode', 'aZ09');
-	$deleteDuration = GETPOSTINT('delete_file_duration');
-	$deleteDatetime = GETPOST('delete_file_datetime', 'alphanohtml');
-	$deleteDatetime = str_replace('T', ' ', $deleteDatetime);
-
-	$res = $service->saveBlockConfig('DISABLE_MODULE', $disableEnabled, $disableMode, $disableDuration, $disableDatetime);
-	if ($res < 0) {
-		$error++;
-		setEventMessages($langs->trans('LockDebugLogsInvalidDeadline'), null, 'errors');
-	}
-
-	if (!$error) {
-		$res = $service->saveBlockConfig('DELETE_FILE', $deleteEnabled, $deleteMode, $deleteDuration, $deleteDatetime);
+	foreach ($blockDefs as $prefix => $def) {
+		$f = $def['field'];
+		$res = $service->saveBlockConfig(
+			$prefix,
+			GETPOSTINT($f.'_enabled'),
+			GETPOST($f.'_mode', 'aZ09'),
+			GETPOSTINT($f.'_duration'),
+			str_replace('T', ' ', GETPOST($f.'_datetime', 'alphanohtml'))
+		);
 		if ($res < 0) {
 			$error++;
 			setEventMessages($langs->trans('LockDebugLogsInvalidDeadline'), null, 'errors');
+			break;
 		}
 	}
 
@@ -101,29 +112,10 @@ LockDebugLogs::runSilent($db, 'setup_page_load');
 /*
  * View — load saved form values after optional silent run
  */
-$disableEnabled = $service->getModuleConstInt('LOCKDEBUGLOGS_DISABLE_MODULE_ENABLED');
-$disableMode = $service->getModuleConst('LOCKDEBUGLOGS_DISABLE_MODULE_MODE', 'duration');
-if ($disableMode === '') {
-	$disableMode = 'duration';
+$settings = array();
+foreach (array_keys($blockDefs) as $prefix) {
+	$settings[$prefix] = lockdebuglogsLoadBlockSettings($service, $prefix);
 }
-$disableDuration = $service->getModuleConstInt('LOCKDEBUGLOGS_DISABLE_MODULE_DURATION', 1800);
-if ($disableDuration <= 0) {
-	$disableDuration = 1800;
-}
-$disableAt = $service->getModuleConstInt('LOCKDEBUGLOGS_DISABLE_MODULE_AT');
-$disableDatetime = lockdebuglogsFormatDatetimeLocal($service->getModuleConst('LOCKDEBUGLOGS_DISABLE_MODULE_DATETIME', ''), $disableAt);
-
-$deleteEnabled = $service->getModuleConstInt('LOCKDEBUGLOGS_DELETE_FILE_ENABLED');
-$deleteMode = $service->getModuleConst('LOCKDEBUGLOGS_DELETE_FILE_MODE', 'duration');
-if ($deleteMode === '') {
-	$deleteMode = 'duration';
-}
-$deleteDuration = $service->getModuleConstInt('LOCKDEBUGLOGS_DELETE_FILE_DURATION', 1800);
-if ($deleteDuration <= 0) {
-	$deleteDuration = 1800;
-}
-$deleteAt = $service->getModuleConstInt('LOCKDEBUGLOGS_DELETE_FILE_AT');
-$deleteDatetime = lockdebuglogsFormatDatetimeLocal($service->getModuleConst('LOCKDEBUGLOGS_DELETE_FILE_DATETIME', ''), $deleteAt);
 
 $help_url = '';
 $arrayofcss = array('/lockdebuglogs/css/lockdebuglogs.css.php');
@@ -194,65 +186,25 @@ if (!$syslogOn || !$cronOn) {
 }
 
 print '<div class="lockdebuglogs-actions-row">';
-print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?action=runnow&token='.newToken().'">'.$langs->trans('LockDebugLogsExecuteNow').'</a>';
+print '<form method="post" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'" class="inline-block">';
+print '<input type="hidden" name="token" value="'.newToken().'">';
+print '<input type="hidden" name="action" value="runnow">';
+print '<input type="submit" class="butAction" value="'.dol_escape_htmltag($langs->trans('LockDebugLogsExecuteNow')).'">';
+print '</form>';
 print '<a class="butAction marginleftonly" href="'.DOL_URL_ROOT.'/admin/syslog.php">'.$langs->trans('LockDebugLogsOpenSyslogSetup').'</a>';
 print '</div>';
 print '</div>';
 
 // —— Safeguard form (two cards) ——
-print '<form method="post" action="'.$_SERVER['PHP_SELF'].'" class="lockdebuglogs-form">';
+print '<form method="post" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'" class="lockdebuglogs-form">';
 print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="action" value="update">';
 
 print '<div class="lockdebuglogs-cards-row">';
 
-// Card disable
-print '<div class="lockdebuglogs-card lockdebuglogs-card-disable">';
-print '<h3 class="lockdebuglogs-card-title">'.$langs->trans('LockDebugLogsSectionDisable').'</h3>';
-print '<p class="lockdebuglogs-card-desc">'.$langs->trans('LockDebugLogsSectionDisableHelp').'</p>';
-
-print '<label class="lockdebuglogs-check-line"><input type="checkbox" name="disable_module_enabled" value="1"'.($disableEnabled ? ' checked' : '').'> '.$langs->trans('LockDebugLogsEnableFeature').'</label>';
-
-print '<div class="lockdebuglogs-field-row">';
-print '<label class="lockdebuglogs-radio-line"><input type="radio" name="disable_module_mode" value="duration"'.($disableMode !== 'datetime' ? ' checked' : '').'> '.$langs->trans('LockDebugLogsModeDuration').'</label>';
-print '<select class="flat maxwidth150" name="disable_module_duration">';
-foreach ($durations as $sec => $langkey) {
-	print '<option value="'.$sec.'"'.($disableDuration == $sec ? ' selected' : '').'>'.$langs->trans($langkey).'</option>';
+foreach ($blockDefs as $prefix => $def) {
+	print lockdebuglogsPrintBlockCard($langs, $def, $settings[$prefix], $durations);
 }
-print '</select></div>';
-
-print '<div class="lockdebuglogs-field-row">';
-print '<label class="lockdebuglogs-radio-line"><input type="radio" name="disable_module_mode" value="datetime"'.($disableMode === 'datetime' ? ' checked' : '').'> '.$langs->trans('LockDebugLogsModeDatetime').'</label>';
-print '<input type="datetime-local" class="flat lockdebuglogs-datetime" name="disable_module_datetime" value="'.dol_escape_htmltag($disableDatetime).'">';
-print '</div>';
-
-print '<div class="lockdebuglogs-deadline-row"><span class="lockdebuglogs-deadline-label">'.$langs->trans('LockDebugLogsDeadline').'</span> ';
-print lockdebuglogsPrintDeadlineBadge($langs, $disableEnabled, $disableAt);
-print '</div></div>';
-
-// Card delete
-print '<div class="lockdebuglogs-card lockdebuglogs-card-delete">';
-print '<h3 class="lockdebuglogs-card-title">'.$langs->trans('LockDebugLogsSectionDelete').'</h3>';
-print '<p class="lockdebuglogs-card-desc">'.$langs->trans('LockDebugLogsSectionDeleteHelp').'</p>';
-
-print '<label class="lockdebuglogs-check-line"><input type="checkbox" name="delete_file_enabled" value="1"'.($deleteEnabled ? ' checked' : '').'> '.$langs->trans('LockDebugLogsEnableFeature').'</label>';
-
-print '<div class="lockdebuglogs-field-row">';
-print '<label class="lockdebuglogs-radio-line"><input type="radio" name="delete_file_mode" value="duration"'.($deleteMode !== 'datetime' ? ' checked' : '').'> '.$langs->trans('LockDebugLogsModeDeleteDuration').'</label>';
-print '<select class="flat maxwidth150" name="delete_file_duration">';
-foreach ($durations as $sec => $langkey) {
-	print '<option value="'.$sec.'"'.($deleteDuration == $sec ? ' selected' : '').'>'.$langs->trans($langkey).'</option>';
-}
-print '</select></div>';
-
-print '<div class="lockdebuglogs-field-row">';
-print '<label class="lockdebuglogs-radio-line"><input type="radio" name="delete_file_mode" value="datetime"'.($deleteMode === 'datetime' ? ' checked' : '').'> '.$langs->trans('LockDebugLogsModeDeleteDatetime').'</label>';
-print '<input type="datetime-local" class="flat lockdebuglogs-datetime" name="delete_file_datetime" value="'.dol_escape_htmltag($deleteDatetime).'">';
-print '</div>';
-
-print '<div class="lockdebuglogs-deadline-row"><span class="lockdebuglogs-deadline-label">'.$langs->trans('LockDebugLogsDeadline').'</span> ';
-print lockdebuglogsPrintDeadlineBadge($langs, $deleteEnabled, $deleteAt);
-print '</div></div>';
 
 print '</div>'; // cards-row
 

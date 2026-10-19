@@ -276,6 +276,11 @@ function lockdebuglogsPrintDeadlineBadge($langs, $enabled, $at)
 	return '<span class="lockdebuglogs-deadline lockdebuglogs-deadline-overdue"><span class="lockdebuglogs-deadline-when">'.dol_escape_htmltag($label).'</span><span class="lockdebuglogs-deadline-meta">('.$langs->trans('LockDebugLogsOverdue').')</span></span>';
 }
 
+/**
+ * Names of all module constants (used for cleanup and diagnostics)
+ *
+ * @return string[]
+ */
 function lockdebuglogsGetConstNames()
 {
 	return array(
@@ -284,11 +289,81 @@ function lockdebuglogsGetConstNames()
 		'LOCKDEBUGLOGS_DISABLE_MODULE_DURATION',
 		'LOCKDEBUGLOGS_DISABLE_MODULE_DATETIME',
 		'LOCKDEBUGLOGS_DISABLE_MODULE_AT',
+		'LOCKDEBUGLOGS_DISABLE_MODULE_FAILS',
+		'LOCKDEBUGLOGS_DISABLE_MODULE_RETRY_AT',
 		'LOCKDEBUGLOGS_DELETE_FILE_ENABLED',
 		'LOCKDEBUGLOGS_DELETE_FILE_MODE',
 		'LOCKDEBUGLOGS_DELETE_FILE_DURATION',
 		'LOCKDEBUGLOGS_DELETE_FILE_DATETIME',
 		'LOCKDEBUGLOGS_DELETE_FILE_AT',
+		'LOCKDEBUGLOGS_DELETE_FILE_FAILS',
+		'LOCKDEBUGLOGS_DELETE_FILE_RETRY_AT',
 		'LOCKDEBUGLOGS_LAST_ACTION_NOTE',
 	);
+}
+
+/**
+ * Load the saved settings of one safeguard block with defaults applied.
+ *
+ * @param LockDebugLogs $service Service
+ * @param string        $prefix  DISABLE_MODULE|DELETE_FILE
+ * @return array{enabled:int,mode:string,duration:int,at:int,datetime:string}
+ */
+function lockdebuglogsLoadBlockSettings($service, $prefix)
+{
+	$key = 'LOCKDEBUGLOGS_'.$prefix.'_';
+
+	$mode = ($service->getModuleConst($key.'MODE', 'duration') === 'datetime' ? 'datetime' : 'duration');
+	$duration = $service->getModuleConstInt($key.'DURATION', 1800);
+	if ($duration <= 0) {
+		$duration = 1800;
+	}
+	$at = $service->getModuleConstInt($key.'AT');
+
+	return array(
+		'enabled' => $service->getModuleConstInt($key.'ENABLED'),
+		'mode' => $mode,
+		'duration' => $duration,
+		'at' => $at,
+		'datetime' => lockdebuglogsFormatDatetimeLocal($service->getModuleConst($key.'DATETIME', ''), $at),
+	);
+}
+
+/**
+ * HTML of one safeguard card on the setup page.
+ *
+ * @param Translate            $langs     Lang
+ * @param array<string,string> $def       field (form field prefix), class (card CSS class), title, help, modeDuration, modeDatetime (lang keys)
+ * @param array<string,mixed>  $settings  Result of lockdebuglogsLoadBlockSettings()
+ * @param array<int,string>    $durations Result of lockdebuglogsGetDurationChoices()
+ * @return string
+ */
+function lockdebuglogsPrintBlockCard($langs, array $def, array $settings, array $durations)
+{
+	$f = $def['field'];
+
+	$html = '<div class="lockdebuglogs-card '.$def['class'].'">';
+	$html .= '<h3 class="lockdebuglogs-card-title">'.$langs->trans($def['title']).'</h3>';
+	$html .= '<p class="lockdebuglogs-card-desc">'.$langs->trans($def['help']).'</p>';
+
+	$html .= '<label class="lockdebuglogs-check-line"><input type="checkbox" name="'.$f.'_enabled" value="1"'.($settings['enabled'] ? ' checked' : '').'> '.$langs->trans('LockDebugLogsEnableFeature').'</label>';
+
+	$html .= '<div class="lockdebuglogs-field-row">';
+	$html .= '<label class="lockdebuglogs-radio-line"><input type="radio" name="'.$f.'_mode" value="duration"'.($settings['mode'] !== 'datetime' ? ' checked' : '').'> '.$langs->trans($def['modeDuration']).'</label>';
+	$html .= '<select class="flat maxwidth150" name="'.$f.'_duration">';
+	foreach ($durations as $sec => $langkey) {
+		$html .= '<option value="'.$sec.'"'.($settings['duration'] == $sec ? ' selected' : '').'>'.$langs->trans($langkey).'</option>';
+	}
+	$html .= '</select></div>';
+
+	$html .= '<div class="lockdebuglogs-field-row">';
+	$html .= '<label class="lockdebuglogs-radio-line"><input type="radio" name="'.$f.'_mode" value="datetime"'.($settings['mode'] === 'datetime' ? ' checked' : '').'> '.$langs->trans($def['modeDatetime']).'</label>';
+	$html .= '<input type="datetime-local" class="flat lockdebuglogs-datetime" name="'.$f.'_datetime" value="'.dol_escape_htmltag($settings['datetime']).'">';
+	$html .= '</div>';
+
+	$html .= '<div class="lockdebuglogs-deadline-row"><span class="lockdebuglogs-deadline-label">'.$langs->trans('LockDebugLogsDeadline').'</span> ';
+	$html .= lockdebuglogsPrintDeadlineBadge($langs, $settings['enabled'], $settings['at']);
+	$html .= '</div></div>';
+
+	return $html;
 }
